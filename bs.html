@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+
+    <title>Battleship</title>
+    <style>
+      body { font-family: Arial, Helvetica, sans-serif; }
+      h2 {        
+        font-size: 20;
+        margin-left: 100px;
+      }      
+
+      .water td {
+        width: 23px;
+        height: 23px;
+        padding: 0;
+        margin: 0;
+        border-width: 1px;
+        border-color: black;
+        border-style: solid;
+        text-align: center;
+      }
+
+      .player { margin-left: 100px; }
+      .clickable { cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h2>Battleship Game</h2>
+      <div id="computer" class="player">
+        <p>Computer (<span id="computer-ships-count"></span> ships left.)</p>
+      </div>
+      <div id="player-one" class="player">
+        <p>Player One (<span id="player-ships-count"></span> ships left.)</p>
+      </div>
+    <div>
+    <script>
+      const computerShips = [
+          ["computer-1-1", "computer-2-1", "computer-3-1", "computer-4-1", "computer-5-1"], 
+          ["computer-0-4", "computer-0-5", "computer-0-6", "computer-0-7", "computer-0-8"],
+          ["computer-3-8", "computer-4-8", "computer-5-8", "computer-6-8", "computer-7-8"],
+          ["computer-9-2", "computer-9-3", "computer-9-4", "computer-9-5", "computer-9-6"]
+      ];
+
+      let computerClicks = [];
+
+      const playerOneShips = [
+        ["player-one-4-9", "player-one-5-9", "player-one-6-9", "player-one-7-9", "player-one-8-9"],
+        ["player-one-7-0", "player-one-7-1", "player-one-7-2", "player-one-7-3", "player-one-7-4"],
+        ["player-one-1-1", "player-one-1-2", "player-one-1-3", "player-one-1-4", "player-one-1-5"],
+        ["player-one-3-2", "player-one-3-3", "player-one-3-4", "player-one-3-5", "player-one-3-6"]
+      ];
+
+      // Create the cell grid for player.
+      function createWater (pre) {
+        let rows = "";
+
+        for (ii = 0; ii < 10; ii++) {
+          let row = '<tr>'; 
+          
+          for (jj = 0; jj < 10; jj++) {
+              row += '<td id="' + pre + '-' + ii + '-' + jj + '" class="water-cell">o</td>';
+          }
+
+          row += "</tr>"
+          rows += row;
+        }        
+
+        let water = `<table class="water"><tbody>${rows}</tbody></table>`;
+
+        return water;
+      }
+
+      // Add an event listener to listen for clicks.
+      function makeClickable (cells) {
+          for (ii = 0; ii < cells.length; ii++) {
+            cells[ii].classList.add("clickable");
+            cells[ii].addEventListener('click', processClick);
+          }
+      }
+
+      // After each click, player of computer, update the count of ships left for both players.
+      function updateShipsCount () {
+        const computerShipsEl = document.getElementById("computer-ships-count");
+        const playerOneShipsEl = document.getElementById("player-ships-count");
+
+        computerShipsEl.textContent = computerShips.length;
+        playerOneShipsEl.textContent = playerOneShips.length;
+
+        if (computerShips.length == 0) {
+            alert("Congrats! You won!");
+        } 
+
+        if (playerOneShips.length == 0) {
+            alert("Haha, you lost!");
+        }
+      }
+
+      // Check if clicked cell is part of a ship.
+      function hasShip (player, cellId) {
+          let ships = computerShips;
+
+          if (player == "computer") {
+            ships = playerOneShips;
+          }
+
+          // Go through all the ships of the player.
+          for (ii = 0; ii < ships.length; ii++) {
+            const ship = ships[ii];
+
+            // Check if the cellId is same than any of the ship's cells. If so, the ship was hit, and true is returned. Otherwise false is returned.
+            for (jj = 0; jj < ship.length; jj++) {
+                const shipCell = ship[jj];
+
+                // The hit cell was part of the player's ship.
+                if (shipCell == cellId) {
+                    return true;
+                }
+            } 
+          }
+
+          return false;
+      }
+
+      // Computer's click.
+      function computerClick () {
+          if (computerClicks.length < 100) {    
+              let foundEmpty = false;
+
+              while (foundEmpty == false) {
+                  let randomRow = Math.floor(Math.random() * 10);
+                  let randomCell = Math.floor(Math.random() * 10);
+                  let cellId = "player-one-" + randomRow + "-" + randomCell;
+
+                  if (computerClicks.indexOf(cellId) == -1) {
+                      processCellClick(cellId);
+                      computerClicks.push(cellId);
+                      foundEmpty = true;
+                  }
+              }
+          } else {
+            console.log("Game over!");
+          }
+      }
+
+      // If the clicked cell is part of a ship, remove the cell from the ship. If it was the last cell of the ship, remove the ship as well.
+      function removeShipCell(id) {
+          let ships = playerOneShips;
+
+          if (id.startsWith('computer')) {
+              ships = computerShips;
+          }
+
+          for (ii = 0; ii < ships.length; ii++) {
+              const ship = ships[ii];
+
+              for (jj = 0; jj < ship.length; jj++) {
+                const cell = ship[jj];
+
+                if (cell == id) {
+                    console.log("Ship cell found: " + id);
+                    ship.splice(jj, 1);
+                }
+              }
+
+              if (ship.length == 0) {
+                ships.splice(ii, 1);
+              }
+          }
+      }
+
+      // Process click, either player's or computer's.
+      function processCellClick (id) {
+        // Find out if the click was player's or computer's.
+        let player = "computer";
+
+        if (id.startsWith("computer-")) {
+          player = "player";
+        }
+
+        // Check if the clicked cell is part of a ship.
+        const hitShip = hasShip(player, id);
+
+        // If the clicked cell WAS part of a ship, change it's color to black, otherwise change the color to light blue.
+        if (hitShip) {
+          document.getElementById(id).style.backgroundColor = "black";
+        } else {
+          document.getElementById(id).style.backgroundColor = "lightskyblue";
+        }
+        
+        // IF computer's cell was clicked, disable the cell that it can't be clicked again.
+        if (id.startsWith("computer-")) {
+            document.getElementById(id).classList.remove('clickable');
+            document.getElementById(id).removeEventListener("click", processClick);
+        }
+
+        removeShipCell(id);
+      }
+
+      // For each click...
+      processClick = function () {
+          processCellClick(this.id);
+          // Computer's turn.
+          computerClick();
+          updateShipsCount();
+      };
+
+      // Create playing grids ie. water.
+      let computer = document.getElementById('computer');
+      computer.insertAdjacentHTML('beforeend', createWater("computer"));
+      let playerOne = document.getElementById('player-one');
+      playerOne.insertAdjacentHTML('beforeend', createWater("player-one"));
+
+      // Only computer cells are clickable. Player one's cells will be "clicked" by computer.
+      let waters = document.getElementsByClassName("water");
+      let computerCells = waters[0].getElementsByClassName('water-cell');
+
+      // Make computer's cells clickable.
+      makeClickable(computerCells);
+      // Update the ships count for both of the players.
+      updateShipsCount();
+    </script>
+  </body>
+</html>
