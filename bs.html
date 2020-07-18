@@ -142,8 +142,6 @@
                       foundEmpty = true;
                   }
               }
-          } else {
-            console.log("Game over!");
           }
       }
 
@@ -162,7 +160,6 @@
                 const cell = ship[jj];
 
                 if (cell == id) {
-                    console.log("Ship cell found: " + id);
                     ship.splice(jj, 1);
                 }
               }
